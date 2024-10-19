@@ -6,11 +6,21 @@ from geopy import Point
 import googlemaps
 import random 
 import geopy.distance
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get the Google Maps API key from the environment
+API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+
 
 DISTANCE = 5  # Target distance in km
-TOLERANCE = 0.5  # Tolerance for walking route (to account for longer paths)
+TOLERANCE = 0.6  # Tolerance for walking route (to account for longer paths)
+NBR_TRAILS=5
 
-gmaps = googlemaps.Client(key='AIzaSyAdDt0McS7gFqTAdHL1RxP4b2Sx7su1QrA')
+gmaps = googlemaps.Client(key=API_KEY)
 
 
 # Function to find random destinations within a given distance from the origin
@@ -39,7 +49,7 @@ def adapt_form_of_destinations(dests):
 def filter_destinations_by_distance(origin_tuple,destinations, distance, tolerance):
     filtered_destinations= []
     matrix_returned = gmaps.distance_matrix( origin_tuple, destinations,
-                    mode="walking", avoid="highways")
+                    mode="walking", avoid="highways", )
 
     for i,element in enumerate(matrix_returned['rows'][0]['elements']):
         if element['status']=='OK':
@@ -52,15 +62,14 @@ def filter_destinations_by_distance(origin_tuple,destinations, distance, toleran
 
 def main():
     #get directions
-    origin='28 Bd Gaspard Monge, 91120 Palaiseau'
-    destination='7 Av. Carnot, 91300 Massy'
+    origin='Châtillon - Montrouge, 92320 Châtillon'
 
     #geocode the origin
     geocode_origin= gmaps.geocode(origin)
     latitude_origin = geocode_origin[0]['geometry']['location']['lat']
     longitude_origin = geocode_origin[0]['geometry']['location']['lng']
 
-    print(f"latitude: {latitude_origin}, longitude: {longitude_origin}")
+    print(f" The origin adress: {origin},\n The corresponding coordinates: ({latitude_origin}, {longitude_origin})")
 
     # prepare the origin point for geopy
     origin_point=Point(latitude_origin,longitude_origin)
@@ -73,13 +82,26 @@ def main():
     filtered_destinations=filter_destinations_by_distance(origin_tuple,destinations, DISTANCE, TOLERANCE)
 
 
-    print("filtered destinations found",filtered_destinations)
+    #Used to debug, in order to see the returned destinations
+    #print("filtered destinations found",filtered_destinations)
 
 
     final_matrix_return=gmaps.distance_matrix( origin_tuple, filtered_destinations,
                         mode="walking", avoid="highways")
+    
+    
+    # Create a list of dictionaries to store the desired number of trails
+    dest_distance = [
+        {
+            'destination': final_matrix_return['destination_addresses'][i],
+            'distance': final_matrix_return['rows'][0]['elements'][i]['distance']['text']
+        }
+        for i in range(min(NBR_TRAILS, len(filtered_destinations)))
+    ]
 
-    print("Final matrix return", final_matrix_return)
+    print("Final destinations and their distances:")
+    for item in dest_distance:
+        print(f"Destination: {item['destination']}, Distance: {item['distance']}")
 
 if __name__=="__main__":
     main()
