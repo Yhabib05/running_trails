@@ -14,6 +14,40 @@ To create random walking routes, I opted for a method where I "create" a circle 
 ## Interactive Interface with FastAPI
 After developing the initial script, I built an interactive interface using FastAPI for the backend. This interface allows users to input their starting point and desired walking distance. The backend processes the input, generates appropriate destinations, and displays them on a map using Google Maps, providing a more dynamic and user-friendly experience.
 
+## How to Use
+Clone the Repository
+First, clone the project from GitHub:
+
+```bash
+git clone https://github.com/Yhabib05/running_trails.git
+```
+
+
+Add Your Google Maps API Key
+Create a .env file in the root directory and add your Google Maps API key like this:
+
+```bash
+GOOGLE_MAPS_API_KEY='Your_google_maps_api_key'
+```
+
+### Run the Basic Script
+
+To use the script and generate random walking routes based on your input, simply run:
+
+```bash
+python3 running_routes.py
+```
+
+### Launch the Interactive Interface
+To use the interactive web interface with FastAPI, start the server by running:
+
+```bash
+python3 -m uvicorn running_trails_interface:app --reload
+```
+
+Once the server is running, you can access the interface in your web browser by navigating to http://127.0.0.1:8000/. Here, you can input your starting point and distance to generate random walking routes, displayed interactively on a map!
+
+
 ## Tech Stack
 - Python (Geopy, Google Maps API)
 - FastAPI (Backend)
