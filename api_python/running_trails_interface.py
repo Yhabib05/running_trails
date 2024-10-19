@@ -23,7 +23,8 @@ class DestinationRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
     with open("index.html") as f:
-        return f.read()
+        html_content = f.read().replace("Your_GOOGLE_MAPS_API_KEY", API_KEY)
+        return HTMLResponse(content=html_content)
 
 @app.post("/get_destinations")
 async def get_destinations(request: DestinationRequest):

@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Destination Finder</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=Your_GOOGLE_MAPS_API_KEY&libraries=places"></script>
 </head>
 <body>
-    <h1>Find Running Destinations</h1>
+    <h1>Find Walking Destinations</h1>
     <label for="origin">Origin:</label>
     <input type="text" id="origin" required>
     <label for="distance">Distance (km):</label>
@@ -14,8 +15,26 @@
     <button onclick="findDestinations()">Find Destinations</button>
 
     <div id="results"></div>
+    <div id="map" style="height: 500px; width: 100%;"></div>
 
     <script>
+        let map;
+        let directionsService;
+        let directionsRenderer;
+
+        function initMap() {
+            // Initialize the map
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 7,
+                center: { lat: 48.8566, lng: 2.3522 } // Initial center (Paris)
+            });
+
+            // Initialize the Directions service and renderer
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer();
+            directionsRenderer.setMap(map);
+        }
+
         async function findDestinations() {
             const origin = document.getElementById('origin').value;
             const distance = parseFloat(document.getElementById('distance').value);
@@ -29,16 +48,56 @@
             });
 
             const results = await response.json();
-            displayResults(results);
+            displayResults(results, origin);
         }
 
-        function displayResults(destinations) {
+        function displayResults(destinations, origin) {
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '';
+
+            // Clear previous event listeners if any
+            const destinationSelect = document.createElement('select');
+            destinationSelect.id = 'destination-select';
+
             destinations.forEach(dest => {
-                resultsDiv.innerHTML += `<p>Destination: ${dest.destination}, Distance: ${dest.distance}, Duration: ${dest.duration}</p>`;
+                // Add each destination to the dropdown
+                const option = document.createElement('option');
+                option.value = dest.destination; // The actual destination
+                option.textContent = `Destination: ${dest.destination}, Distance: ${dest.distance}, Duration: ${dest.duration}`;
+                destinationSelect.appendChild(option);
+            });
+
+            resultsDiv.appendChild(destinationSelect);
+
+            // Create a button to show the selected destination
+            const showRouteButton = document.createElement('button');
+            showRouteButton.textContent = 'Show Route';
+            showRouteButton.onclick = () => {
+                const selectedDestination = destinationSelect.value;
+                displayMap(origin, selectedDestination);
+            };
+
+            resultsDiv.appendChild(showRouteButton);
+        }
+
+        function displayMap(origin, destination) {
+            const request = {
+                origin: origin,
+                destination: destination,
+                travelMode: 'WALKING'
+            };
+
+            directionsService.route(request, function(result, status) {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+                } else {
+                    alert('Could not display directions: ' + status);
+                }
             });
         }
+
+        // Initialize the map when the window loads
+        window.onload = initMap;
     </script>
 </body>
 </html>
