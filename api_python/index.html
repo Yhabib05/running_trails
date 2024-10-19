@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Destination Finder</title>
+</head>
+<body>
+    <h1>Find Running Destinations</h1>
+    <label for="origin">Origin:</label>
+    <input type="text" id="origin" required>
+    <label for="distance">Distance (km):</label>
+    <input type="number" id="distance" required>
+    <button onclick="findDestinations()">Find Destinations</button>
+
+    <div id="results"></div>
+
+    <script>
+        async function findDestinations() {
+            const origin = document.getElementById('origin').value;
+            const distance = parseFloat(document.getElementById('distance').value);
+
+            const response = await fetch('http://127.0.0.1:8000/get_destinations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ origin: origin, distance: distance }),
+            });
+
+            const results = await response.json();
+            displayResults(results);
+        }
+
+        function displayResults(destinations) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            destinations.forEach(dest => {
+                resultsDiv.innerHTML += `<p>Destination: ${dest.destination}, Distance: ${dest.distance}, Duration: ${dest.duration}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
