@@ -10,8 +10,16 @@
     <h1>Find Walking Destinations</h1>
     <label for="origin">Origin:</label>
     <input type="text" id="origin" required>
+
     <label for="distance">Distance (km):</label>
     <input type="number" id="distance" required>
+
+    <label for="nbrTrails">Number of Trails desired:</label>
+    <input type="number" id="nbrTrails" required>
+
+    <label for="tolerance">Tolerance (+-km):</label>
+    <input type="number" id="tolerance" required>
+
     <button onclick="findDestinations()">Find Destinations</button>
 
     <div id="results"></div>
@@ -38,13 +46,15 @@
         async function findDestinations() {
             const origin = document.getElementById('origin').value;
             const distance = parseFloat(document.getElementById('distance').value);
+            const nbrTrails = parseInt(document.getElementById('nbrTrails').value);
+            const tolerance = parseFloat(document.getElementById('tolerance').value);
 
             const response = await fetch('http://127.0.0.1:8000/get_destinations', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ origin: origin, distance: distance }),
+                body: JSON.stringify({ origin: origin, distance: distance, nbr_trails:nbrTrails, tolerance:tolerance }),
             });
 
             const results = await response.json();
@@ -53,32 +63,49 @@
 
         function displayResults(destinations, origin) {
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
-
-            // Clear previous event listeners if any
-            const destinationSelect = document.createElement('select');
-            destinationSelect.id = 'destination-select';
+            resultsDiv.innerHTML = ''; // Clear previous results
+            let activeButton = null;
 
             destinations.forEach(dest => {
-                // Add each destination to the dropdown
-                const option = document.createElement('option');
-                option.value = dest.destination; // The actual destination
-                option.textContent = `Destination: ${dest.destination}, Distance: ${dest.distance}, Duration: ${dest.duration}`;
-                destinationSelect.appendChild(option);
+                // Create a container for each destination
+                const destinationDiv = document.createElement('div');
+                destinationDiv.style.margin = '10px';
+                destinationDiv.style.padding = '10px';
+                destinationDiv.style.border = '1px solid #ccc';
+
+                // Add the destination information
+                destinationDiv.innerHTML = `Destination: ${dest.destination}, Distance: ${dest.distance}, Duration: ${dest.duration}`;
+
+                // Create a button for each destination to display the route
+                const showRouteButton = document.createElement('button');
+                showRouteButton.textContent = 'Show Route';
+                showRouteButton.onclick = () => {
+                    // Remove highlight from all other buttons/divs
+                    const allDivs = resultsDiv.getElementsByTagName('div');
+                    for (let div of allDivs) {
+                        div.style.backgroundColor = ''; // Reset background color
+                    }
+
+                    // Highlight the clicked div
+                    destinationDiv.style.backgroundColor = '#d3d3d3'; // Light gray background to highlight
+
+                    // Display the map for the selected route
+                    displayMap(origin, dest.destination);
+
+                    // Remove the "Show Route" button after it's clicked
+                    if (activeButton){
+                        activeButton.style.display = 'inline';
+                    }
+                    showRouteButton.style.display='none';
+                    activeButton = showRouteButton;
+                };
+
+                // Append the button and destination info to the results div
+                destinationDiv.appendChild(showRouteButton);
+                resultsDiv.appendChild(destinationDiv);
             });
-
-            resultsDiv.appendChild(destinationSelect);
-
-            // Create a button to show the selected destination
-            const showRouteButton = document.createElement('button');
-            showRouteButton.textContent = 'Show Route';
-            showRouteButton.onclick = () => {
-                const selectedDestination = destinationSelect.value;
-                displayMap(origin, selectedDestination);
-            };
-
-            resultsDiv.appendChild(showRouteButton);
         }
+
 
         function displayMap(origin, destination) {
             const request = {

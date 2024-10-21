@@ -19,6 +19,8 @@ app = FastAPI()
 class DestinationRequest(BaseModel):
     origin: str
     distance: float
+    tolerance: float
+    nbr_trails: int
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
@@ -30,8 +32,8 @@ async def read_root():
 async def get_destinations(request: DestinationRequest):
     origin = request.origin
     distance = request.distance
-    TOLERANCE = 0.6
-    NBR_TRAILS = 5
+    tolerance = request.tolerance
+    nbr_trails = request.nbr_trails
 
     # Geocode the origin
     geocode_origin = gmaps.geocode(origin)
@@ -44,7 +46,7 @@ async def get_destinations(request: DestinationRequest):
 
     # Find random destinations
     destinations = adapt_form_of_destinations(find_destinations(origin_point, distance, [], 20))
-    filtered_destinations = filter_destinations_by_distance(origin_tuple, destinations, distance, TOLERANCE)
+    filtered_destinations = filter_destinations_by_distance(origin_tuple, destinations, distance, tolerance)
 
     # Get distance matrix
     final_matrix_return = gmaps.distance_matrix(origin_tuple, filtered_destinations, mode="walking", avoid="highways")
@@ -56,7 +58,7 @@ async def get_destinations(request: DestinationRequest):
             'distance': final_matrix_return['rows'][0]['elements'][i]['distance']['text'],
             'duration': final_matrix_return['rows'][0]['elements'][i]['duration']['text']
         }
-        for i in range(min(NBR_TRAILS, len(filtered_destinations))) 
+        for i in range(min(nbr_trails, len(filtered_destinations))) 
     ] # we used min here just in case the filtered destinations are less than the desired number of trails :)
 
     return dest_distance
